@@ -1222,7 +1222,7 @@ readable(const char *html, const char *url, const char *encoding, int options)
                 grand_parent_score = initialize_node_score(scores, grand_parent, options);
                 candidates = rd_list_append(candidates, grand_parent);
                 /* Look up the parent score again, since the hash
-                table might have grown and rehased, invalidating
+                table might have grown and rehashed, invalidating
                 the pointer
                 */
                 parent_score = lookup_score_ptr(scores, parent);
