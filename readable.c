@@ -1312,7 +1312,7 @@ readable(const char *html, const char *url, const char *encoding, int options)
     xmlChar *top_candidate_class = xmlGetProp(top_candidate, BAD_CAST "class");
     DEBUG_LOG("Threshold %f\n", threshold);
     /* Insert nodes in the article */
-    htmlNodePtr start = top_candidate->parent ? : top_candidate;
+    htmlNodePtr start = top_candidate->parent ? top_candidate->parent : top_candidate;
     htmlNodePtr next;
     for (htmlNodePtr cur = start->children; cur; cur = next) {
         next = cur->next;
