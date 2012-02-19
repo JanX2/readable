@@ -286,7 +286,7 @@ node_inner_html(htmlDocPtr doc, htmlNodePtr node)
     char *html = NULL;
     for (htmlNodePtr cur = node->children; cur; cur = cur->next) {
         char *cur_html = node_html(doc, cur);
-        size_t len = strlen(cur_html);
+        ssize_t len = (ssize_t)strlen(cur_html);
         ssize_t available_size = allocated_size - data_size - 1;
         if (len > available_size) {
             while (len > available_size) {
@@ -1312,7 +1312,7 @@ readable(const char *html, const char *url, const char *encoding, int options)
     xmlChar *top_candidate_class = xmlGetProp(top_candidate, BAD_CAST "class");
     DEBUG_LOG("Threshold %f\n", threshold);
     /* Insert nodes in the article */
-    htmlNodePtr start = top_candidate->parent ? NULL : top_candidate;
+    htmlNodePtr start = top_candidate->parent ? : top_candidate;
     htmlNodePtr next;
     for (htmlNodePtr cur = start->children; cur; cur = next) {
         next = cur->next;
