@@ -13,6 +13,7 @@
 
 #ifdef READABLE_USE_LIBICU
 #include <unicode/uregex.h>
+#include <unicode/ustring.h>
 #else
 #include <pcre.h>
 #endif
@@ -156,9 +157,6 @@ finalize_regexps(void)
     FINALIZE_RE(SMALL_TEXT);
     FINALIZE_RE(VIDEO);
     FINALIZE_RE(UNLIKELY_ARTICLE_IMAGE);
-#ifdef READABLE_USE_LIBICU
-    u_cleanup();
-#endif
 }
 
 void
@@ -411,10 +409,10 @@ float
 name_score(const xmlChar *name)
 {
     float score = 0;
-    if (matches(POSITIVE_SCORE, name)) {
+    if (matches(POSITIVE_SCORE, (const char *)name)) {
         score += 25;
     }
-    if (matches(NEGATIVE_SCORE, name)) {
+    if (matches(NEGATIVE_SCORE, (const char *)name)) {
         score -= 25;
     }
     return score;
@@ -871,7 +869,7 @@ search_article_image(htmlNodePtr node, htmlNodePtr prev)
         xmlChar *width = xmlGetProp(image, BAD_CAST "width");
         xmlChar *height = xmlGetProp(image, BAD_CAST "height");
 
-        if (matches(UNLIKELY_ARTICLE_IMAGE, src)) {
+        if (matches(UNLIKELY_ARTICLE_IMAGE, (const char *)src)) {
             score -= 20;
         }
         char *dot = strrchr((char *)src, '.');
@@ -1473,8 +1471,8 @@ find_next_link(htmlDocPtr doc, xmlNodePtr node, const char *url)
         return NULL;
     }
 
-    if (xmlStrstr(href, BAD_CAST "http://") == href ||
-        xmlStrstr(url, BAD_CAST "https://") == href) {
+    if (xmlStrstr(BAD_CAST href, BAD_CAST "http://") == href ||
+        xmlStrstr(BAD_CAST url, BAD_CAST "https://") == href) {
     
         return href;
     }
