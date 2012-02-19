@@ -286,18 +286,20 @@ node_inner_html(htmlDocPtr doc, htmlNodePtr node)
     char *html = NULL;
     for (htmlNodePtr cur = node->children; cur; cur = cur->next) {
         char *cur_html = node_html(doc, cur);
-        int len = strlen(cur_html);
+        size_t len = strlen(cur_html);
         ssize_t available_size = allocated_size - data_size - 1;
         if (len > available_size) {
             while (len > available_size) {
-                allocated_size = MAX(allocated_size * 1.2, 512);
+                allocated_size = MAX(allocated_size * 1.2f, 512);
                 available_size = allocated_size - data_size - 1;
             }
             html = realloc(html, allocated_size);
         }
         strncpy(html + data_size, cur_html, len);
         data_size += len;
-        html[data_size] = '\0';
+		if (html) { // This satisfies the static analyzer
+			html[data_size] = '\0';
+		}
         free(cur_html);
     }
     return html;
@@ -781,7 +783,7 @@ clean_node(htmlDocPtr doc, htmlNodePtr node, kh_score_t *scores, int options,
             }
         }
     }
-    if (node->name[0] == 'p') {
+    if (node->name && node->name[0] == 'p') {
         int nospaces = node_nospaces_len(node);
         if (!nospaces) {
             kh_str_t *tags = node_tags_count(node);
@@ -1280,6 +1282,10 @@ readable(const char *html, const char *url, const char *encoding, int options)
         kh_value(scores, iter) = 0;
         top_candidate_score = &(kh_value(scores, iter));
     }
+	if (!top_candidate) {
+        xmlFreeDoc(doc);
+        return NULL;
+    }
 #ifdef READABLE_DEBUG
     char *debug_name = node_test_name(top_candidate);
     DEBUG_LOG("Top candidate %s with score %f\n", debug_name, *top_candidate_score);
@@ -1306,7 +1312,7 @@ readable(const char *html, const char *url, const char *encoding, int options)
     xmlChar *top_candidate_class = xmlGetProp(top_candidate, BAD_CAST "class");
     DEBUG_LOG("Threshold %f\n", threshold);
     /* Insert nodes in the article */
-    htmlNodePtr start = top_candidate->parent ? : top_candidate;
+    htmlNodePtr start = top_candidate->parent ? NULL : top_candidate;
     htmlNodePtr next;
     for (htmlNodePtr cur = start->children; cur; cur = next) {
         next = cur->next;
