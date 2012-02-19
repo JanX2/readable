@@ -9,7 +9,21 @@ int
 main(int argc, char *argv[])
 {
     char *contents = NULL;
-    FILE *fp = fopen(argv[1], "r");
+	
+	char *filename;
+	if (argc > 1) {
+		filename = argv[1];
+	} else {
+		printf("Usage: %s <filename>\n", argv[0]);
+		return -1;
+	}
+	
+    FILE *fp = fopen(filename, "r");
+	if (!fp) {
+		printf("Error opening %s\n", filename);
+		return -1;
+	}
+
     fseek(fp, 0, SEEK_END);
     long len = ftell(fp);
     rewind(fp);
