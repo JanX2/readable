@@ -61,7 +61,7 @@ UChar *uastrdup(const char *s)
 #define RD_RE URegularExpression
 #define matches(re, s) ({ \
     UErrorCode status = U_ZERO_ERROR; \
-    UChar *cs = uastrdup(s); \
+    UChar *cs = uastrdup((const char *)s); \
     uregex_setText(re, cs, -1, &status); \
     UBool result = uregex_find(re, 0, &status); \
     uregex_reset(re, 0, &status); \
@@ -102,6 +102,12 @@ static RD_RE *NEGATIVE_SCORE = NULL;
 static RD_RE *SMALL_TEXT = NULL;
 static RD_RE *VIDEO = NULL;
 static RD_RE *UNLIKELY_ARTICLE_IMAGE = NULL;
+
+#define HTML_READ_DOC_OPTIONS (HTML_PARSE_RECOVER | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING)
+
+#ifdef DEBUG_LOG
+#undef DEBUG_LOG
+#endif
 
 #ifdef READABLE_DEBUG
 #define DEBUG_LOG(...) fprintf(stderr, __VA_ARGS__)
@@ -157,6 +163,16 @@ finalize_regexps(void)
     FINALIZE_RE(SMALL_TEXT);
     FINALIZE_RE(VIDEO);
     FINALIZE_RE(UNLIKELY_ARTICLE_IMAGE);
+#ifdef READABLE_USE_LIBICU
+#if !TARGET_OS_IPHONE
+    /* Including this code in iOS triggers the
+     non-public API detection and prevents app
+     submission
+     */
+    extern void u_cleanup(void);
+    u_cleanup();
+#endif
+#endif
 }
 
 void
@@ -1167,7 +1183,7 @@ char *
 readable(const char *html, const char *url, const char *encoding, int options)
 {
     const xmlChar *input = (const xmlChar *)html;
-    htmlDocPtr doc = htmlReadDoc(input, url, encoding, HTML_PARSE_RECOVER);
+    htmlDocPtr doc = htmlReadDoc(input, url, encoding, HTML_READ_DOC_OPTIONS);
     char *retval = NULL;
     htmlNodePtr readable_node = NULL;
 
@@ -1421,7 +1437,7 @@ readable(const char *html, const char *url, const char *encoding, int options)
         stripped the multimedia element
         */
         xmlFreeDoc(doc);
-        doc = htmlReadDoc(input, url, encoding, HTML_PARSE_RECOVER);
+        doc = htmlReadDoc(input, url, encoding, HTML_READ_DOC_OPTIONS);
         struct rd_list *image_candidates = NULL;
         struct rd_list *video_candidates = NULL;
         int image_candidates_count = 0;
@@ -1509,7 +1525,7 @@ next_page_url(const char *html, const char *url,
               const char *encoding)
 {
     const xmlChar *input = (const xmlChar *)html;
-    htmlDocPtr doc = htmlReadDoc(input, url, encoding, HTML_PARSE_RECOVER);
+    htmlDocPtr doc = htmlReadDoc(input, url, encoding, HTML_READ_DOC_OPTIONS);
     xmlChar *next_url = NULL;
     
     if (!doc) {
